@@ -9,6 +9,8 @@
     <style>
       body {
         margin: 0;
+        background-repeat: no-repeat;
+        background-size: 100% 100%;
       }
       canvas {
         width: 100%;
@@ -65,6 +67,10 @@
       .hidden {
         display: none;
       }
+      #dataCapture img {
+        width: 100%;
+        margin-bottom: -130px;
+      }
     </style>
     <script src="//cdnjs.cloudflare.com/ajax/libs/three.js/r69/three.min.js"></script>
   </head>
@@ -80,6 +86,7 @@
       <!-- <div class="instructionsText">Bienvenido! Para participar, debes escanear el QR de los tres magos!</div> -->
       <div id="instructionsText" class="instructionsText"></div>
       <div id="dataCapture" class="instructionsText hidden">
+        <img src="/cajetin.png" />
         <form id="registroUsuario">
           <label for="fname">Nombre:</label><br />
           <input type="text" id="fname" name="name" /><br />
@@ -90,9 +97,36 @@
         </form>
         <button id="sendButton" , class="sendButton">ENVIAR</button>
       </div>
+      <!-- <div id="dataCapture" class="instructionsText hidden">
+        <form id="registroUsuario">
+          <label for="fname">Nombre:</label><br />
+          <input type="text" id="fname" name="name" /><br />
+          <label for="lname">Correo electrónico:</label><br />
+          <input type="text" id="lemail" name="email" /><br />
+          <label for="lname">Teléfono:</label><br />
+          <input type="text" id="lphone" name="phone" /><br />
+        </form>
+        <button id="sendButton" , class="sendButton">ENVIAR</button>
+      </div> -->
     </div>
-    <video id="videoTag" type="video/mp4" controls loop style="display: none" preload="auto" poster="/tapas/green.png"></video>
+    <video
+      id="videoTag"
+      type="video/mp4"
+      controls
+      loop
+      playsinline
+      webkit-playsinline
+      style="display: none"
+      preload="auto"
+      poster="/tapas/green.png"
+    ></video>
     <script>
+      try {
+        webview.allowsInlineMediaPlayback = true;
+      } catch(e) {
+        console.log(e)
+      }
+
       try {
         var delta = 0.01;
         var manualControl = false;
@@ -106,6 +140,7 @@
         var videoSrc;
         var tapaSrc;
         var hasGyroscope = false;
+        var giveReward = false;
         try {
           if (Gyroscope) {
             hasGyroscope = true;
@@ -134,17 +169,22 @@
           case "?gaspar":
             videoSrc = "gaspar1000.mp4";
             tapaSrc = "gaspar.png";
+            backSrc = "red.png";
             break;
           case "?melchor":
             videoSrc = "melchor1000.mp4";
             tapaSrc = "melchor.png";
+            backSrc = "blue.png";
             break;
           case "?baltasar":
           default:
             videoSrc = "baltasar1000.mp4";
             tapaSrc = "baltasar.png";
+            backSrc = "green.png";
             break;
         }
+
+        document.body.style = `background-image: url(/tapas/${backSrc})`;
 
         localStorage.setItem(window.location.search, new Date().getTime());
 
@@ -158,7 +198,7 @@
         var showPlayMessage = false;
 
         if (existingMagos.length === 3 && !localStorage.getItem("participo")) {
-          setInstructions("¡Lo lograste! ¡Ya puedes participar!", true);
+          giveReward = true;
         } else {
           if (existingMagos.length === 2) {
             setInstructions(
@@ -264,8 +304,8 @@
         // setTimeout(canPlayNow, 1500)
 
         var mensajes = [
-          iOS() && hasGyroscope
-            ? "Tu movil no soporta WebVR, arrastra con tus dedos y explora el video 360"
+          iOS()
+            ? "Tu movil no soporta WebVR, arrastra con tus dedos para explorar el video 360"
             : "Mueve tu movil y explora el entorno 360",
           "¡Escanea los códigos de los tres magos y participa!",
           "Los comercios de Alcobendas te dan la bienvenida",
@@ -359,6 +399,13 @@
 
           const video = document.getElementById("videoTag");
           video.play();
+
+          if (giveReward) {
+            setTimeout(() => {
+              setInstructions("", true);
+            }, 50000);
+          }
+
           const texture = new THREE.VideoTexture(video);
 
           // creation of the sphere material
