@@ -93,405 +93,412 @@
     </div>
     <video id="videoTag" loop style="display: none" preload="auto"></video>
     <script>
-      var delta = 0.01;
-      var manualControl = false;
-      var longitude = 180;
-      var latitude = 0;
-      var savedX;
-      var savedY;
-      var savedLongitude;
-      var savedLatitude;
-      var instructionsText = document.getElementById("instructionsText");
-      var videoSrc;
-      var tapaSrc;
-      var hasGyroscope = false;
       try {
-        if (Gyroscope) {
-          hasGyroscope = true;
-        }
-      } catch (err) {
-        console.log("NO GIRO :(");
-      }
-
-      function iOS() {
-        return (
-          [
-            "iPad Simulator",
-            "iPhone Simulator",
-            "iPod Simulator",
-            "iPad",
-            "iPhone",
-            "iPod",
-          ].includes(navigator.platform) ||
-          // iPad on iOS 13 detection
-          (navigator.userAgent.includes("Mac") && "ontouchend" in document)
-        );
-      }
-
-      console.log(window.location.search);
-      switch (window.location.search) {
-        case "?gaspar":
-          videoSrc = "gaspar1000.mp4";
-          tapaSrc = "gaspar.png";
-          break;
-        case "?melchor":
-          videoSrc = "melchor1000.mp4";
-          tapaSrc = "melchor.png";
-          break;
-        case "?baltasar":
-        default:
-          videoSrc = "baltasar1000.mp4";
-          tapaSrc = "baltasar.png";
-          break;
-      }
-
-      localStorage.setItem(window.location.search, new Date().getTime());
-
-      let existingMagos = [
-        { name: "gaspar", time: localStorage.getItem("?gaspar") },
-        { name: "melchor", time: localStorage.getItem("?melchor") },
-        { name: "baltasar", time: localStorage.getItem("?baltasar") },
-      ].filter((e) => e.time);
-
-      console.log(existingMagos);
-      var showPlayMessage = false;
-
-      if (existingMagos.length === 3 && !localStorage.getItem("participo")) {
-        setInstructions("¡Lo lograste! ¡Ya puedes participar!", true);
-      } else {
-        if (existingMagos.length === 2) {
-          setInstructions(
-            "Ya has escaneado 2 códigos ¡solo falta uno más para participar!"
-          );
-        } else {
-          setInstructions("Cargando...");
-          showPlayMessage = true;
-        }
-      }
-
-      document.getElementById("tapa").src = `/tapas/${tapaSrc}`;
-
-      document.getElementById("sendButton").onclick = function (evt) {
-        evt.preventDefault();
-        var d = document.getElementById("registroUsuario");
-        var elements = d.elements;
-        var payload = {};
-        for (var item of elements) {
-          if (item.value.length > 0) {
-            payload[item.name] = item.value;
+        var delta = 0.01;
+        var manualControl = false;
+        var longitude = 180;
+        var latitude = 0;
+        var savedX;
+        var savedY;
+        var savedLongitude;
+        var savedLatitude;
+        var instructionsText = document.getElementById("instructionsText");
+        var videoSrc;
+        var tapaSrc;
+        var hasGyroscope = false;
+        try {
+          if (Gyroscope) {
+            hasGyroscope = true;
           }
+        } catch (err) {
+          console.log("NO GIRO :(");
         }
 
-        console.log("payload", payload, Object.keys(payload).length);
-
-        if (Object.keys(payload).length < 3) {
-          setInstructions(
-            "No se pudo enviar, por favor rellena todos los datos."
+        function iOS() {
+          return (
+            [
+              "iPad Simulator",
+              "iPhone Simulator",
+              "iPod Simulator",
+              "iPad",
+              "iPhone",
+              "iPod",
+            ].includes(navigator.platform) ||
+            // iPad on iOS 13 detection
+            (navigator.userAgent.includes("Mac") && "ontouchend" in document)
           );
+        }
+
+        console.log(window.location.search);
+        switch (window.location.search) {
+          case "?gaspar":
+            videoSrc = "gaspar1000.mp4";
+            tapaSrc = "gaspar.png";
+            break;
+          case "?melchor":
+            videoSrc = "melchor1000.mp4";
+            tapaSrc = "melchor.png";
+            break;
+          case "?baltasar":
+          default:
+            videoSrc = "baltasar1000.mp4";
+            tapaSrc = "baltasar.png";
+            break;
+        }
+
+        localStorage.setItem(window.location.search, new Date().getTime());
+
+        let existingMagos = [
+          { name: "gaspar", time: localStorage.getItem("?gaspar") },
+          { name: "melchor", time: localStorage.getItem("?melchor") },
+          { name: "baltasar", time: localStorage.getItem("?baltasar") },
+        ].filter((e) => e.time);
+
+        console.log(existingMagos);
+        var showPlayMessage = false;
+
+        if (existingMagos.length === 3 && !localStorage.getItem("participo")) {
+          setInstructions("¡Lo lograste! ¡Ya puedes participar!", true);
         } else {
-          var url =
-            "https://67beevx9ia.execute-api.eu-west-3.amazonaws.com/dev/save?spreadsheetId=12meQyZ5LCy_WeiOBo-Sp0LJMbwiXobJsT-ty8kXwHOM&worksheetName=Magos";
-
-          fetch(url, {
-            method: "POST", // or 'PUT'
-            body: JSON.stringify(payload), // data can be `string` or {object}!
-            headers: {
-              "Content-Type": "application/json",
-            },
-          });
-          document.getElementById("playButton").classList.remove("hidden");
-          document.getElementById("dataCapture").classList.add("hidden");
-          setInstructions(
-            "Enviado! Gracias por participar! Ahora solo tienes que darle reproducir :)"
-          );
-          localStorage.setItem("participo", true);
-        }
-      };
-
-      function setInstructions(t, completed) {
-        instructionsText.innerText = t;
-        if (completed) {
-          document.getElementById("dataCapture").classList.remove("hidden");
-        }
-      }
-      var videoTag = document.getElementById("videoTag");
-      videoTag.src = `videos/${videoSrc}`;
-
-      videoTag.addEventListener("progress", onProgress, false);
-
-      function onProgress(e) {
-        var vid = document.getElementById("videoTag");
-        var percent = null;
-
-        if (vid.buffered.length > 0 && vid.buffered.end && vid.duration) {
-          percent = vid.buffered.end(0) / vid.duration;
-        } else if (
-          vid.bytesTotal != undefined &&
-          vid.bytesTotal > 0 &&
-          vid.bufferedBytes != undefined
-        ) {
-          percent = vid.bufferedBytes / vid.bytesTotal;
-        }
-
-        if (percent !== null) {
-          percent = 100 * Math.min(1, Math.max(0, percent));
-
-          // console.log(percent);
-        }
-      }
-
-      let canPlayOnce = false;
-      videoTag.addEventListener("canplay", (event) => {
-        console.log("can play!");
-        if (!canPlayOnce) {
-          canPlayOnce = true;
-
-          if (showPlayMessage) {
+          if (existingMagos.length === 2) {
             setInstructions(
-              "Apunta la cámara trasera del movil hacia el mago y dale reproducir ▶️."
+              "Ya has escaneado 2 códigos ¡solo falta uno más para participar!"
             );
+          } else {
+            setInstructions("Cargando...");
+            showPlayMessage = true;
+          }
+        }
+
+        document.getElementById("tapa").src = `/tapas/${tapaSrc}`;
+
+        document.getElementById("sendButton").onclick = function (evt) {
+          evt.preventDefault();
+          var d = document.getElementById("registroUsuario");
+          var elements = d.elements;
+          var payload = {};
+          for (var item of elements) {
+            if (item.value.length > 0) {
+              payload[item.name] = item.value;
+            }
           }
 
-          document.getElementById("playButton").classList.remove("hidden");
+          console.log("payload", payload, Object.keys(payload).length);
+
+          if (Object.keys(payload).length < 3) {
+            setInstructions(
+              "No se pudo enviar, por favor rellena todos los datos."
+            );
+          } else {
+            var url =
+              "https://67beevx9ia.execute-api.eu-west-3.amazonaws.com/dev/save?spreadsheetId=12meQyZ5LCy_WeiOBo-Sp0LJMbwiXobJsT-ty8kXwHOM&worksheetName=Magos";
+
+            fetch(url, {
+              method: "POST", // or 'PUT'
+              body: JSON.stringify(payload), // data can be `string` or {object}!
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+            document.getElementById("playButton").classList.remove("hidden");
+            document.getElementById("dataCapture").classList.add("hidden");
+            setInstructions(
+              "Enviado! Gracias por participar! Ahora solo tienes que darle reproducir :)"
+            );
+            localStorage.setItem("participo", true);
+          }
+        };
+
+        function setInstructions(t, completed) {
+          instructionsText.innerText = t;
+          if (completed) {
+            document.getElementById("dataCapture").classList.remove("hidden");
+          }
         }
-      });
+        var videoTag = document.getElementById("videoTag");
+        videoTag.src = `videos/${videoSrc}`;
 
-      var mensajes = [
-        iOS() && hasGyroscope
-          ? "Tu movil no soporta WebVR, arrastra con tus dedos y explora el video 360"
-          : "Mueve tu movil y explora el entorno 360",
-        "¡Escanea los códigos de los tres magos y participa!",
-        "Los comercios de Alcobendas te dan la bienvenida",
-      ];
+        videoTag.addEventListener("progress", onProgress, false);
 
-      var mensajesPos = 0;
-      function cicloMensajes() {
-        setInterval(() => {
-          var msj = mensajes.shift();
-          setInstructions(msj);
-          mensajes.push(msj);
-        }, 5000);
-      }
+        function onProgress(e) {
+          var vid = document.getElementById("videoTag");
+          var percent = null;
 
-      // setInstructions("Lo lograste! solo dejanos tus datos!", true);
+          if (vid.buffered.length > 0 && vid.buffered.end && vid.duration) {
+            percent = vid.buffered.end(0) / vid.duration;
+          } else if (
+            vid.bytesTotal != undefined &&
+            vid.bytesTotal > 0 &&
+            vid.bufferedBytes != undefined
+          ) {
+            percent = vid.bufferedBytes / vid.bytesTotal;
+          }
 
-      let playButton = document.getElementById("playButton");
-      playButton.onclick = function () {
-        longitude = 180;
-        latitude = -25;
-        init360();
-        setInstructions("Reproduciendo...");
-        cicloMensajes();
-        // setTimeout(() => {
-        // setInstructions(
-        //   "Mira a tu alrededor y explora el entorno de realidad aumentada!"
-        // );
-        // setInstructions("Lo lograste! solo dejanos tus datos!", true);
-        // }, 4000);
-        // setInstructions("Apunta el movil hacia GASPAR y dale reproducir.")
+          if (percent !== null) {
+            percent = 100 * Math.min(1, Math.max(0, percent));
 
-        // setTimeout(() => {
-        //   setInstructions("Escanea los códigos de los tres magos y participa!");
-        // }, 8000);
-        // setInstructions("Ya has escaneado 2 códigos, solo falta uno más y estarás participando!")
-        // videoTag.play()
-      };
-      // panoramas background
-      // var panoramasArray = [
-      //   "01.jpg",
-      //   // "02.jpg",
-      //   // "03.jpg",
-      //   // "04.jpg",
-      //   // "05.jpg",
-      //   // "06.jpg",
-      // ];
-      // var panoramaNumber = Math.floor(Math.random() * panoramasArray.length);
+            // console.log(percent);
+          }
+        }
 
-      // setting up the renderer
-      function init360() {
-        var sensor = new RelativeOrientationSensor();
-        sensor.addEventListener("reading", () => {
-          console.log("reading", sensor.quaternion);
+        let canPlayOnce = false;
+        videoTag.addEventListener("canplay", (event) => {
+          console.log("can play!");
+          if (!canPlayOnce) {
+            canPlayOnce = true;
+
+            if (showPlayMessage) {
+              setInstructions(
+                "Apunta la cámara trasera del movil hacia el mago y dale reproducir ▶️."
+              );
+            }
+
+            document.getElementById("playButton").classList.remove("hidden");
+          }
         });
-        sensor.start();
 
-        let centeringContainers =
-          document.getElementsByClassName("centeringContainer");
-        console.log(centeringContainers);
-        for (var container of centeringContainers) {
-          container.style = "display: none;";
+        var mensajes = [
+          iOS() && hasGyroscope
+            ? "Tu movil no soporta WebVR, arrastra con tus dedos y explora el video 360"
+            : "Mueve tu movil y explora el entorno 360",
+          "¡Escanea los códigos de los tres magos y participa!",
+          "Los comercios de Alcobendas te dan la bienvenida",
+        ];
+
+        var mensajesPos = 0;
+        function cicloMensajes() {
+          setInterval(() => {
+            var msj = mensajes.shift();
+            setInstructions(msj);
+            mensajes.push(msj);
+          }, 5000);
         }
-        setTimeout(() => {
-          centeringContainers =
-            document.getElementsByClassName("tapaContainer");
+
+        // setInstructions("Lo lograste! solo dejanos tus datos!", true);
+
+        let playButton = document.getElementById("playButton");
+        playButton.onclick = function () {
+          longitude = 180;
+          latitude = -25;
+          init360();
+          setInstructions("Reproduciendo...");
+          cicloMensajes();
+          // setTimeout(() => {
+          // setInstructions(
+          //   "Mira a tu alrededor y explora el entorno de realidad aumentada!"
+          // );
+          // setInstructions("Lo lograste! solo dejanos tus datos!", true);
+          // }, 4000);
+          // setInstructions("Apunta el movil hacia GASPAR y dale reproducir.")
+
+          // setTimeout(() => {
+          //   setInstructions("Escanea los códigos de los tres magos y participa!");
+          // }, 8000);
+          // setInstructions("Ya has escaneado 2 códigos, solo falta uno más y estarás participando!")
+          // videoTag.play()
+        };
+        // panoramas background
+        // var panoramasArray = [
+        //   "01.jpg",
+        //   // "02.jpg",
+        //   // "03.jpg",
+        //   // "04.jpg",
+        //   // "05.jpg",
+        //   // "06.jpg",
+        // ];
+        // var panoramaNumber = Math.floor(Math.random() * panoramasArray.length);
+
+        // setting up the renderer
+        function init360() {
+          var sensor = new RelativeOrientationSensor();
+          sensor.addEventListener("reading", () => {
+            console.log("reading", sensor.quaternion);
+          });
+          sensor.start();
+
+          let centeringContainers =
+            document.getElementsByClassName("centeringContainer");
           console.log(centeringContainers);
           for (var container of centeringContainers) {
             container.style = "display: none;";
           }
-        }, 2000);
+          setTimeout(() => {
+            centeringContainers =
+              document.getElementsByClassName("tapaContainer");
+            console.log(centeringContainers);
+            for (var container of centeringContainers) {
+              container.style = "display: none;";
+            }
+          }, 2000);
 
-        renderer = new THREE.WebGLRenderer();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
+          renderer = new THREE.WebGLRenderer();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+          document.body.appendChild(renderer.domElement);
 
-        // creating a new scene
-        var scene = new THREE.Scene();
+          // creating a new scene
+          var scene = new THREE.Scene();
 
-        // adding a camera
-        var camera = new THREE.PerspectiveCamera(
-          75,
-          window.innerWidth / window.innerHeight,
-          1,
-          1000
-        );
-        camera.target = new THREE.Vector3(0, 0, 0);
+          // adding a camera
+          var camera = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            1,
+            1000
+          );
+          camera.target = new THREE.Vector3(0, 0, 0);
 
-        // creation of a big sphere geometry
-        var sphere = new THREE.SphereGeometry(100, 100, 40);
-        sphere.applyMatrix(new THREE.Matrix4().makeScale(-1, 1, 1));
+          // creation of a big sphere geometry
+          var sphere = new THREE.SphereGeometry(100, 100, 40);
+          sphere.applyMatrix(new THREE.Matrix4().makeScale(-1, 1, 1));
 
-        const video = document.getElementById("videoTag");
-        video.play();
-        const texture = new THREE.VideoTexture(video);
+          const video = document.getElementById("videoTag");
+          video.play();
+          const texture = new THREE.VideoTexture(video);
 
-        // creation of the sphere material
-        var sphereMaterial = new THREE.MeshBasicMaterial();
-        // sphereMaterial.map = THREE.ImageUtils.loadTexture(
-        //   panoramasArray[panoramaNumber]
-        // );
-        sphereMaterial.map = texture;
+          // creation of the sphere material
+          var sphereMaterial = new THREE.MeshBasicMaterial();
+          // sphereMaterial.map = THREE.ImageUtils.loadTexture(
+          //   panoramasArray[panoramaNumber]
+          // );
+          sphereMaterial.map = texture;
 
-        // geometry + material = mesh (actual object)
-        var sphereMesh = new THREE.Mesh(sphere, sphereMaterial);
-        scene.add(sphereMesh);
+          // geometry + material = mesh (actual object)
+          var sphereMesh = new THREE.Mesh(sphere, sphereMaterial);
+          scene.add(sphereMesh);
 
-        // listeners
-        document.addEventListener("mousedown", onDocumentMouseDown, false);
-        document.addEventListener("mousemove", onDocumentMouseMove, false);
-        document.addEventListener("mouseup", onDocumentMouseUp, false);
+          // listeners
+          document.addEventListener("mousedown", onDocumentMouseDown, false);
+          document.addEventListener("mousemove", onDocumentMouseMove, false);
+          document.addEventListener("mouseup", onDocumentMouseUp, false);
 
-        render();
+          render();
 
-        function render() {
-          requestAnimationFrame(render);
+          function render() {
+            requestAnimationFrame(render);
 
-          if (!manualControl) {
-            longitude += delta;
+            if (!manualControl) {
+              longitude += delta;
+            }
+
+            // limiting latitude from -85 to 85 (cannot point to the sky or under your feet)
+            latitude = Math.max(-85, Math.min(85, latitude));
+
+            // moving the camera according to current latitude (vertical movement) and longitude (horizontal movement)
+            camera.target.x =
+              500 *
+              Math.sin(THREE.Math.degToRad(90 - latitude)) *
+              Math.cos(THREE.Math.degToRad(longitude));
+
+            camera.target.y =
+              500 * Math.cos(THREE.Math.degToRad(90 - latitude));
+            camera.target.z =
+              500 *
+              Math.sin(THREE.Math.degToRad(90 - latitude)) *
+              Math.sin(THREE.Math.degToRad(longitude));
+            camera.lookAt(camera.target);
+
+            // calling again render function
+            renderer.render(scene, camera);
           }
 
-          // limiting latitude from -85 to 85 (cannot point to the sky or under your feet)
-          latitude = Math.max(-85, Math.min(85, latitude));
+          // when the mouse is pressed, we switch to manual control and save current coordinates
+          function onDocumentMouseDown(event) {
+            event.preventDefault();
+            delta = 0;
 
-          // moving the camera according to current latitude (vertical movement) and longitude (horizontal movement)
-          camera.target.x =
-            500 *
-            Math.sin(THREE.Math.degToRad(90 - latitude)) *
-            Math.cos(THREE.Math.degToRad(longitude));
+            manualControl = true;
 
-          camera.target.y = 500 * Math.cos(THREE.Math.degToRad(90 - latitude));
-          camera.target.z =
-            500 *
-            Math.sin(THREE.Math.degToRad(90 - latitude)) *
-            Math.sin(THREE.Math.degToRad(longitude));
-          camera.lookAt(camera.target);
+            savedX = event.clientX;
+            savedY = event.clientY;
 
-          // calling again render function
-          renderer.render(scene, camera);
-        }
+            savedLongitude = longitude;
+            savedLatitude = latitude;
+          }
 
-        // when the mouse is pressed, we switch to manual control and save current coordinates
-        function onDocumentMouseDown(event) {
-          event.preventDefault();
-          delta = 0;
+          // when the mouse moves, if in manual contro we adjust coordinates
+          function onDocumentMouseMove(event) {
+            if (manualControl) {
+              longitude = (savedX - event.clientX) * 0.1 + savedLongitude;
+              latitude = (event.clientY - savedY) * 0.1 + savedLatitude;
+            }
+          }
 
-          manualControl = true;
+          // when the mouse is released, we turn manual control off
+          function onDocumentMouseUp(event) {
+            manualControl = false;
+          }
 
-          savedX = event.clientX;
-          savedY = event.clientY;
+          // pressing a key (actually releasing it) changes the texture map
+          // document.onkeyup = function (event) {
+          //   panoramaNumber = (panoramaNumber + 1) % panoramasArray.length;
+          //   sphereMaterial.map = THREE.ImageUtils.loadTexture(
+          //     panoramasArray[panoramaNumber]
+          //   );
+          // };
 
-          savedLongitude = longitude;
-          savedLatitude = latitude;
-        }
+          var container = document.querySelector("body");
+          container.addEventListener("touchstart", startTouch, false);
+          container.addEventListener("touchmove", moveTouch, false);
 
-        // when the mouse moves, if in manual contro we adjust coordinates
-        function onDocumentMouseMove(event) {
-          if (manualControl) {
-            longitude = (savedX - event.clientX) * 0.1 + savedLongitude;
-            latitude = (event.clientY - savedY) * 0.1 + savedLatitude;
+          // Swipe Up / Down / Left / Right
+          var initialX = null;
+          var initialY = null;
+
+          function startTouch(e) {
+            initialX = e.touches[0].clientX;
+            initialY = e.touches[0].clientY;
+
+            savedLongitude = longitude;
+            savedLatitude = latitude;
+          }
+
+          function moveTouch(e) {
+            var currentX = e.touches[0].clientX;
+            var currentY = e.touches[0].clientY;
+
+            var diffX = initialX - currentX;
+            var diffY = currentY - initialY;
+
+            longitude = diffX * 0.09 + savedLongitude;
+            latitude = diffY * 0.04 + savedLatitude;
+          }
+
+          try {
+            let gyroscope = new Gyroscope({ frequency: 30 });
+
+            let horizontalsum = 0;
+            let verticalsum = 0;
+            let zsum = 0;
+
+            gyroscope.addEventListener("reading", (e) => {
+              console.log(`Angular velocity along the X-axis ${gyroscope.x}`);
+              console.log(`Angular velocity along the Y-axis ${gyroscope.y}`);
+              console.log(`Angular velocity along the Y-axis ${gyroscope.z}`);
+
+              let VerticalFactor = 2.5; // Vertical
+              let HorizontalFactor = -2.5; // Horizontal
+
+              latitude = gyroscope.x * VerticalFactor + latitude;
+              longitude = gyroscope.y * HorizontalFactor + longitude;
+
+              verticalsum = verticalsum + gyroscope.x;
+              horizontalsum = horizontalsum + gyroscope.y;
+              zsum = zsum + gyroscope.z;
+              console.log(zsum);
+
+              // console.log(`Angular velocity along the Z-axis ${gyroscope.z}`);
+            });
+            gyroscope.start();
+          } catch (err) {
+            console.log("Err", err);
           }
         }
-
-        // when the mouse is released, we turn manual control off
-        function onDocumentMouseUp(event) {
-          manualControl = false;
-        }
-
-        // pressing a key (actually releasing it) changes the texture map
-        // document.onkeyup = function (event) {
-        //   panoramaNumber = (panoramaNumber + 1) % panoramasArray.length;
-        //   sphereMaterial.map = THREE.ImageUtils.loadTexture(
-        //     panoramasArray[panoramaNumber]
-        //   );
-        // };
-
-        var container = document.querySelector("body");
-        container.addEventListener("touchstart", startTouch, false);
-        container.addEventListener("touchmove", moveTouch, false);
-
-        // Swipe Up / Down / Left / Right
-        var initialX = null;
-        var initialY = null;
-
-        function startTouch(e) {
-          initialX = e.touches[0].clientX;
-          initialY = e.touches[0].clientY;
-
-          savedLongitude = longitude;
-          savedLatitude = latitude;
-        }
-
-        function moveTouch(e) {
-          var currentX = e.touches[0].clientX;
-          var currentY = e.touches[0].clientY;
-
-          var diffX = initialX - currentX;
-          var diffY = currentY - initialY;
-
-          longitude = diffX * 0.09 + savedLongitude;
-          latitude = diffY * 0.04 + savedLatitude;
-        }
-
-        try {
-          let gyroscope = new Gyroscope({ frequency: 30 });
-
-          let horizontalsum = 0;
-          let verticalsum = 0;
-          let zsum = 0;
-
-          gyroscope.addEventListener("reading", (e) => {
-            console.log(`Angular velocity along the X-axis ${gyroscope.x}`);
-            console.log(`Angular velocity along the Y-axis ${gyroscope.y}`);
-            console.log(`Angular velocity along the Y-axis ${gyroscope.z}`);
-
-            let VerticalFactor = 2.5; // Vertical
-            let HorizontalFactor = -2.5; // Horizontal
-
-            latitude = gyroscope.x * VerticalFactor + latitude;
-            longitude = gyroscope.y * HorizontalFactor + longitude;
-
-            verticalsum = verticalsum + gyroscope.x;
-            horizontalsum = horizontalsum + gyroscope.y;
-            zsum = zsum + gyroscope.z;
-            console.log(zsum);
-
-            // console.log(`Angular velocity along the Z-axis ${gyroscope.z}`);
-          });
-          gyroscope.start();
-        } catch (err) {
-          console.log("Err", err);
-        }
+      } catch (err) {
+        setInstructions(err);
       }
-
+      window.onError = function (message, source, lineno, colno, error) {
+        setInstructions(message);
+      };
       // setInterval(() => {
       //   console.log("longitude", longitude, "latitude", latitude, "zsum", zsum);
       // }, 1000);
