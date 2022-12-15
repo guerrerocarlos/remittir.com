@@ -241,27 +241,27 @@
           }
         }
 
-        let canPlayOnce = false;
+        // var canPlayOnce = false;
 
-        function canPlayNow() {
-          console.log("can play!");
-          if (!canPlayOnce) {
-            canPlayOnce = true;
+        // function canPlayNow() {
+        //   console.log("can play!");
+        //   if (!canPlayOnce) {
+        //     canPlayOnce = true;
 
-            if (showPlayMessage) {
-              setInstructions(
-                "Apunta la cámara trasera del movil hacia el mago y dale reproducir ▶️."
-              );
-            }
+        //     if (showPlayMessage) {
+        //       setInstructions(
+        //         "Apunta la cámara trasera del movil hacia el mago y dale reproducir ▶️."
+        //       );
+        //     }
 
-            // document.getElementById("playButton").classList.remove("hidden");
-          }
-        }
+        //     // document.getElementById("playButton").classList.remove("hidden");
+        //   }
+        // }
 
         // videoTag.addEventListener("canplay", canPlayNow);
         // videoTag.addEventListener("loadedmetadata", canPlayNow);
 
-        setTimeout(canPlayNow, 1500)
+        // setTimeout(canPlayNow, 1500)
 
         var mensajes = [
           iOS() && hasGyroscope
