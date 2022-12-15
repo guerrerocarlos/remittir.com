@@ -242,7 +242,8 @@
         }
 
         let canPlayOnce = false;
-        videoTag.addEventListener("canplay", (event) => {
+
+        function canPlayNow() {
           console.log("can play!");
           if (!canPlayOnce) {
             canPlayOnce = true;
@@ -255,7 +256,10 @@
 
             document.getElementById("playButton").classList.remove("hidden");
           }
-        });
+        }
+
+        videoTag.addEventListener("canplay", canPlayNow);
+        videoTag.addEventListener("loadedmetadata", canPlayNow);
 
         var mensajes = [
           iOS() && hasGyroscope
@@ -310,11 +314,11 @@
 
         // setting up the renderer
         function init360() {
-          // var sensor = new RelativeOrientationSensor();
-          // sensor.addEventListener("reading", () => {
-          //   console.log("reading", sensor.quaternion);
-          // });
-          // sensor.start();
+          var sensor = new RelativeOrientationSensor();
+          sensor.addEventListener("reading", () => {
+            console.log("reading", sensor.quaternion);
+          });
+          sensor.start();
 
           let centeringContainers =
             document.getElementsByClassName("centeringContainer");
