@@ -86,7 +86,7 @@
       <!-- <div class="instructionsText">Bienvenido! Para participar, debes escanear el QR de los tres magos!</div> -->
       <div id="instructionsText" class="instructionsText"></div>
       <div id="dataCapture" class="instructionsText hidden">
-        <img src="/cajetin.png" />
+        <img src="/cajetin.png" style="max-width: 350px;"/>
         <form id="registroUsuario">
           <label for="fname">Nombre:</label><br />
           <input type="text" id="fname" name="name" /><br />
@@ -403,7 +403,7 @@
           if (giveReward) {
             setTimeout(() => {
               setInstructions("", true);
-            }, 50000);
+            }, 5000);
           }
 
           const texture = new THREE.VideoTexture(video);
