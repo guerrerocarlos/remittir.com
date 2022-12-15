@@ -104,6 +104,14 @@
       var instructionsText = document.getElementById("instructionsText");
       var videoSrc;
       var tapaSrc;
+      var hasGyroscope = false;
+      try {
+        if (Gyroscope) {
+          hasGyroscope = true;
+        }
+      } catch (err) {
+        console.log("NO GIRO :(");
+      }
 
       function iOS() {
         return (
@@ -226,8 +234,8 @@
       });
 
       var mensajes = [
-        iOS()
-          ? "Arrastra con tus dedos y explora el video 360"
+        iOS() && hasGyroscope
+          ? "Tu movil no soporta WebVR, arrastra con tus dedos y explora el video 360"
           : "Mueve tu movil y explora el entorno 360",
         "¡Escanea los códigos de los tres magos y participa!",
         "Los comercios de Alcobendas te dan la bienvenida",
@@ -425,34 +433,33 @@
         }
 
         try {
-
           let gyroscope = new Gyroscope({ frequency: 30 });
-  
+
           let horizontalsum = 0;
           let verticalsum = 0;
           let zsum = 0;
-  
+
           gyroscope.addEventListener("reading", (e) => {
             console.log(`Angular velocity along the X-axis ${gyroscope.x}`);
             console.log(`Angular velocity along the Y-axis ${gyroscope.y}`);
             console.log(`Angular velocity along the Y-axis ${gyroscope.z}`);
-  
+
             let VerticalFactor = 2.5; // Vertical
             let HorizontalFactor = -2.5; // Horizontal
-  
+
             latitude = gyroscope.x * VerticalFactor + latitude;
             longitude = gyroscope.y * HorizontalFactor + longitude;
-  
+
             verticalsum = verticalsum + gyroscope.x;
             horizontalsum = horizontalsum + gyroscope.y;
             zsum = zsum + gyroscope.z;
             console.log(zsum);
-  
+
             // console.log(`Angular velocity along the Z-axis ${gyroscope.z}`);
           });
           gyroscope.start();
-        } catch(err) {
-          console.log("Err", err)
+        } catch (err) {
+          console.log("Err", err);
         }
       }
 
