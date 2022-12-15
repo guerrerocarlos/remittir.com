@@ -73,7 +73,7 @@
       <img id="tapa" />
     </div>
 
-    <div id="playButton" class="centeringContainer hidden">
+    <div id="playButton" class="centeringContainer">
       <img src="play.png" />
     </div>
     <div class="instructionsContainer">
@@ -165,7 +165,7 @@
               "Ya has escaneado 2 códigos ¡solo falta uno más para participar!"
             );
           } else {
-            setInstructions("Cargando...");
+            setInstructions("...");
             showPlayMessage = true;
           }
         }
@@ -254,7 +254,7 @@
               );
             }
 
-            document.getElementById("playButton").classList.remove("hidden");
+            // document.getElementById("playButton").classList.remove("hidden");
           }
         }
 
