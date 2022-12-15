@@ -258,8 +258,10 @@
           }
         }
 
-        videoTag.addEventListener("canplay", canPlayNow);
-        videoTag.addEventListener("loadedmetadata", canPlayNow);
+        // videoTag.addEventListener("canplay", canPlayNow);
+        // videoTag.addEventListener("loadedmetadata", canPlayNow);
+
+        setTimeout(canPlayNow, 1500)
 
         var mensajes = [
           iOS() && hasGyroscope
