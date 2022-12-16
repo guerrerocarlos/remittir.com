@@ -1,0 +1,155 @@
+<html lang="en">
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1.0,maximum-scale=1.0"
+  />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/inobounce/0.2.0/inobounce.js"></script> -->
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        margin: 0;
+        background-repeat: no-repeat;
+        background-size: 100% 100%;
+        background-color: #eee;
+        background-image: url("/tapas/green.png")
+      }
+      body {
+        font-family: "Poppins", sans-serif;
+        font-size: 0.85em;
+        font-weight: 600;
+      }
+      .tapaContainer {
+        position: fixed;
+        bottom: 13%;
+        left: 50%;
+        top: 5%;
+      }
+      .tapaContainer img {
+        margin-left: -50%;
+        width: 430px;
+      }
+      .tapaContainer form {
+        margin-left: -120px;
+        width: 430px;
+        margin-top: -130px;
+        color: white;
+      }
+      input {
+        width: 240px;
+      }
+      button {
+        width: 200px;
+        margin-left: -100px;
+      }
+      .instructionsContainer {
+        position: fixed;
+        bottom: 0;
+        /* margin: 10px; */
+        width: 100%;
+      }
+      .instructionsText {
+        text-align: center;
+        background-color: #000;
+        font-size: 1.2em;
+        color: white;
+        padding: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="tapaContainer">
+      <img src="/cajetin.png" style="max-width: 350px" />
+      <form id="registroUsuario" class="formContainer">
+        <label for="fname">NOMBRE:</label><br />
+        <input type="text" id="fname" name="name" /><br />
+        <label for="lname">CORREO ELECTRONICO:</label><br />
+        <input type="text" id="lemail" name="email" /><br />
+        <label for="lname">TELEFONO:</label><br />
+        <input type="text" id="lphone" name="phone" /><br />
+      </form>
+      <button id="sendButton" , class="sendButton">ENVIAR</button>
+    </div>
+    <div class="instructionsContainer">
+      <!-- <div class="instructionsText">Bienvenido! Para participar, debes escanear el QR de los tres magos!</div> -->
+      <div id="instructionsText" class="instructionsText"></div>
+    </div>
+  </body>
+  <script>
+    let existingMagos = [
+      { name: "gaspar", time: localStorage.getItem("?gaspar") },
+      { name: "melchor", time: localStorage.getItem("?melchor") },
+      { name: "baltasar", time: localStorage.getItem("?baltasar") },
+    ].filter((e) => e.time);
+    var instructionsText = document.getElementById("instructionsText");
+    function setInstructions(t, completed) {
+      instructionsText.innerText = t;
+      if (completed) {
+        document.getElementById("dataCapture").classList.remove("hidden");
+      }
+    }
+    var d = document.getElementById("registroUsuario");
+    var elements = d.elements;
+
+    if (existingMagos.length === 3 && !localStorage.getItem("participo")) {
+      document.getElementById("sendButton").onclick = function (evt) {
+        evt.preventDefault();
+
+        if (!localStorage.getItem("participo")) {
+          var payload = {};
+          for (var item of elements) {
+            if (item.value.length > 0) {
+              payload[item.name] = item.value;
+            }
+          }
+
+          console.log("payload", payload, Object.keys(payload).length);
+
+          if (Object.keys(payload).length < 3) {
+            setInstructions(
+              "No se pudo enviar, por favor rellena todos los datos."
+            );
+          } else {
+            var url =
+              "https://67beevx9ia.execute-api.eu-west-3.amazonaws.com/dev/save?spreadsheetId=12meQyZ5LCy_WeiOBo-Sp0LJMbwiXobJsT-ty8kXwHOM&worksheetName=Magos";
+
+            fetch(url, {
+              method: "POST", // or 'PUT'
+              body: JSON.stringify(payload), // data can be `string` or {object}!
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+            setInstructions("¡Enviado! ¡Gracias por participar!");
+            localStorage.setItem("participo", true);
+            document.getElementById("sendButton").textContent = "ENVIADO!";
+            for (var item of elements) {
+              item.disabled = true;
+            }
+          }
+        } else {
+          setInstructions("Solo se puede participar una vez!");
+        }
+      };
+    } else {
+      if (!localStorage.getItem("participo")) {
+        setInstructions(
+          "Aún no has completado el reto! debes leer los tres QR de los tres magos para poder participar!"
+        );
+      } else {
+        setInstructions("Solo se puede participar una vez!");
+      }
+      for (var item of elements) {
+        item.disabled = true;
+      }
+      document.getElementById("sendButton").disabled = true;
+    }
+  </script>
+</html>

@@ -5,12 +5,16 @@
     content="width=device-width,initial-scale=1.0,maximum-scale=1.0"
   />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/inobounce/0.2.0/inobounce.js"></script>
   <head>
     <style>
       body {
         margin: 0;
         background-repeat: no-repeat;
         background-size: 100% 100%;
+      }
+      body {
+        overscroll-behavior-y: contain;
       }
       canvas {
         width: 100%;
@@ -42,6 +46,7 @@
         width: 430px;
       }
 
+
       .instructionsContainer {
         position: fixed;
         bottom: 0;
@@ -67,10 +72,6 @@
       .hidden {
         display: none;
       }
-      #dataCapture img {
-        width: 100%;
-        margin-bottom: -130px;
-      }
     </style>
     <script src="//cdnjs.cloudflare.com/ajax/libs/three.js/r69/three.min.js"></script>
   </head>
@@ -85,29 +86,6 @@
     <div class="instructionsContainer">
       <!-- <div class="instructionsText">Bienvenido! Para participar, debes escanear el QR de los tres magos!</div> -->
       <div id="instructionsText" class="instructionsText"></div>
-      <div id="dataCapture" class="instructionsText hidden">
-        <img src="/cajetin.png" style="max-width: 350px" />
-        <form id="registroUsuario">
-          <label for="fname">Nombre:</label><br />
-          <input type="text" id="fname" name="name" /><br />
-          <label for="lname">Correo electrónico:</label><br />
-          <input type="text" id="lemail" name="email" /><br />
-          <label for="lname">Teléfono:</label><br />
-          <input type="text" id="lphone" name="phone" /><br />
-        </form>
-        <button id="sendButton" , class="sendButton">ENVIAR</button>
-      </div>
-      <!-- <div id="dataCapture" class="instructionsText hidden">
-        <form id="registroUsuario">
-          <label for="fname">Nombre:</label><br />
-          <input type="text" id="fname" name="name" /><br />
-          <label for="lname">Correo electrónico:</label><br />
-          <input type="text" id="lemail" name="email" /><br />
-          <label for="lname">Teléfono:</label><br />
-          <input type="text" id="lphone" name="phone" /><br />
-        </form>
-        <button id="sendButton" , class="sendButton">ENVIAR</button>
-      </div> -->
     </div>
     <video
       id="videoTag"
@@ -212,47 +190,47 @@
 
         document.getElementById("tapa").src = `/tapas/${tapaSrc}`;
 
-        document.getElementById("sendButton").onclick = function (evt) {
-          evt.preventDefault();
-          var d = document.getElementById("registroUsuario");
-          var elements = d.elements;
-          var payload = {};
-          for (var item of elements) {
-            if (item.value.length > 0) {
-              payload[item.name] = item.value;
-            }
-          }
+        // document.getElementById("sendButton").onclick = function (evt) {
+        //   evt.preventDefault();
+        //   var d = document.getElementById("registroUsuario");
+        //   var elements = d.elements;
+        //   var payload = {};
+        //   for (var item of elements) {
+        //     if (item.value.length > 0) {
+        //       payload[item.name] = item.value;
+        //     }
+        //   }
 
-          console.log("payload", payload, Object.keys(payload).length);
+        //   console.log("payload", payload, Object.keys(payload).length);
 
-          if (Object.keys(payload).length < 3) {
-            setInstructions(
-              "No se pudo enviar, por favor rellena todos los datos."
-            );
-          } else {
-            var url =
-              "https://67beevx9ia.execute-api.eu-west-3.amazonaws.com/dev/save?spreadsheetId=12meQyZ5LCy_WeiOBo-Sp0LJMbwiXobJsT-ty8kXwHOM&worksheetName=Magos";
+        //   if (Object.keys(payload).length < 3) {
+        //     setInstructions(
+        //       "No se pudo enviar, por favor rellena todos los datos."
+        //     );
+        //   } else {
+        //     var url =
+        //       "https://67beevx9ia.execute-api.eu-west-3.amazonaws.com/dev/save?spreadsheetId=12meQyZ5LCy_WeiOBo-Sp0LJMbwiXobJsT-ty8kXwHOM&worksheetName=Magos";
 
-            fetch(url, {
-              method: "POST", // or 'PUT'
-              body: JSON.stringify(payload), // data can be `string` or {object}!
-              headers: {
-                "Content-Type": "application/json",
-              },
-            });
-            document.getElementById("playButton").classList.remove("hidden");
-            document.getElementById("dataCapture").classList.add("hidden");
-            setInstructions(
-              "Enviado! Gracias por participar! Ahora solo tienes que darle reproducir :)"
-            );
-            localStorage.setItem("participo", true);
-          }
-        };
+        //     fetch(url, {
+        //       method: "POST", // or 'PUT'
+        //       body: JSON.stringify(payload), // data can be `string` or {object}!
+        //       headers: {
+        //         "Content-Type": "application/json",
+        //       },
+        //     });
+        //     document.getElementById("playButton").classList.remove("hidden");
+        //     document.getElementById("dataCapture").classList.add("hidden");
+        //     setInstructions(
+        //       "Enviado! Gracias por participar! Ahora solo tienes que darle reproducir :)"
+        //     );
+        //     localStorage.setItem("participo", true);
+        //   }
+        // };
 
         function setInstructions(t, completed) {
           instructionsText.innerText = t;
           if (completed) {
-            document.getElementById("dataCapture").classList.remove("hidden");
+            document.location = "/capture.html"
           }
         }
         var videoTag = document.getElementById("videoTag");
@@ -403,7 +381,7 @@
           if (giveReward) {
             setTimeout(() => {
               setInstructions("", true);
-            }, 5000);
+            }, 50000);
           }
 
           const texture = new THREE.VideoTexture(video);
@@ -512,8 +490,8 @@
             var diffX = initialX - currentX;
             var diffY = currentY - initialY;
 
-            longitude = diffX * 0.09 + savedLongitude;
-            latitude = diffY * 0.04 + savedLatitude;
+            longitude = diffX * 0.16 + savedLongitude;
+            latitude = diffY * 0.08 + savedLatitude;
           }
 
           try {
