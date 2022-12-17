@@ -145,18 +145,18 @@
         console.log(window.location.search);
         switch (window.location.search) {
           case "?gaspar":
-            videoSrc = "gaspar1000.mp4";
+            videoSrc = "gaspar2340.mp4";
             tapaSrc = "gaspar.png";
             backSrc = "red.png";
             break;
           case "?melchor":
-            videoSrc = "melchor1000.mp4";
+            videoSrc = "melchor2340.mp4";
             tapaSrc = "melchor.png";
             backSrc = "blue.png";
             break;
           case "?baltasar":
           default:
-            videoSrc = "baltasar1000.mp4";
+            videoSrc = "baltasar2340.mp4";
             tapaSrc = "baltasar.png";
             backSrc = "green.png";
             break;
@@ -381,7 +381,7 @@
           if (giveReward) {
             setTimeout(() => {
               setInstructions("", true);
-            }, 50000);
+            }, 5000);
           }
 
           const texture = new THREE.VideoTexture(video);
