@@ -110,6 +110,13 @@
             }
           }
 
+          if(payload["email"].indexOf("@") == -1 || payload["email"].indexOf(".") === -1) {
+            setInstructions(
+              "Correo Inválido."
+            );
+            return 0
+          }
+
           console.log("payload", payload, Object.keys(payload).length);
 
           if (Object.keys(payload).length < 3) {
