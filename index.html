@@ -46,7 +46,6 @@
         width: 430px;
       }
 
-
       .instructionsContainer {
         position: fixed;
         bottom: 0;
@@ -145,18 +144,18 @@
         console.log(window.location.search);
         switch (window.location.search) {
           case "?gaspar":
-            videoSrc = "gaspar1000.mp4";
+            videoSrc = "gaspar1400.mp4";
             tapaSrc = "gaspar.png";
             backSrc = "red.png";
             break;
           case "?melchor":
-            videoSrc = "melchor1000.mp4";
+            videoSrc = "melchor1400.mp4";
             tapaSrc = "melchor.png";
             backSrc = "blue.png";
             break;
           case "?baltasar":
           default:
-            videoSrc = "baltasar1000.mp4";
+            videoSrc = "baltasar1400.mp4";
             tapaSrc = "baltasar.png";
             backSrc = "green.png";
             break;
@@ -230,7 +229,7 @@
         function setInstructions(t, completed) {
           instructionsText.innerText = t;
           if (completed) {
-            document.location = "/capture.html"
+            document.location = "/capture.html";
           }
         }
         var videoTag = document.getElementById("videoTag");
@@ -285,7 +284,9 @@
           iOS()
             ? "Tu movil no soporta WebVR, arrastra con tus dedos para explorar el video 360"
             : "Mueve tu movil y explora el entorno 360",
-          "¡Escanea los códigos de los tres magos y participa!",
+          giveReward
+            ? "¡Lo lograste! Espera al final del video y podras introducir tus datos."
+            : "¡Escanea los códigos de los tres magos y participa!",
           "Los comercios de Alcobendas te dan la bienvenida",
         ];
 
@@ -381,7 +382,7 @@
           if (giveReward) {
             setTimeout(() => {
               setInstructions("", true);
-            }, 50000);
+            }, 60000);
           }
 
           const texture = new THREE.VideoTexture(video);
