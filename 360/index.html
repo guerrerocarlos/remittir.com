@@ -1,0 +1,539 @@
+<html lang="en">
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1.0,maximum-scale=1.0"
+  />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/inobounce/0.2.0/inobounce.js"></script>
+  <head>
+    <style>
+      body {
+        margin: 0;
+        background-repeat: no-repeat;
+        background-size: 100% 100%;
+      }
+      body {
+        overscroll-behavior-y: contain;
+      }
+      canvas {
+        width: 100%;
+        height: 100%;
+      }
+      body {
+        background-color: #444;
+        font-family: "opensans", sans-serif;
+        overflow-y: hidden;
+      }
+      .centeringContainer {
+        position: fixed;
+        bottom: 13%;
+        left: 50%;
+      }
+      .centeringContainer img {
+        margin-left: -50%;
+        width: 250px;
+      }
+
+      .tapaContainer {
+        position: fixed;
+        bottom: 13%;
+        left: 50%;
+        top: 5%;
+      }
+      .tapaContainer img {
+        margin-left: -50%;
+        width: 430px;
+      }
+
+      .instructionsContainer {
+        position: fixed;
+        bottom: 0;
+        /* margin: 10px; */
+        width: 100%;
+      }
+      .instructionsText {
+        text-align: center;
+        background-color: #000;
+        font-size: 1.2em;
+        color: white;
+        padding: 10px;
+      }
+      input {
+        height: 3em;
+        width: 90%;
+      }
+      .sendButton {
+        width: 70%;
+        height: 2.5em;
+        margin-bottom: 70px;
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/three.js/r69/three.min.js"></script>
+  </head>
+  <body>
+    <div id="welcomeImage" class="tapaContainer">
+      <img id="tapa" />
+    </div>
+
+    <div id="playButton" class="centeringContainer">
+      <img src="play.png" />
+    </div>
+    <div class="instructionsContainer">
+      <!-- <div class="instructionsText">Bienvenido! Para participar, debes escanear el QR de los tres magos!</div> -->
+      <div id="instructionsText" class="instructionsText"></div>
+    </div>
+    <video
+      id="videoTag"
+      type="video/mp4"
+      controls
+      loop
+      playsinline
+      webkit-playsinline
+      style="display: none"
+      preload="auto"
+      poster="/tapas/green.png"
+    ></video>
+    <script>
+      try {
+        webview.allowsInlineMediaPlayback = true;
+      } catch (e) {
+        console.log(e);
+      }
+
+      try {
+        var delta = 0.01;
+        var manualControl = false;
+        var longitude = 180;
+        var latitude = 0;
+        var savedX;
+        var savedY;
+        var savedLongitude;
+        var savedLatitude;
+        var instructionsText = document.getElementById("instructionsText");
+        var videoSrc;
+        var tapaSrc;
+        var hasGyroscope = false;
+        var giveReward = false;
+        try {
+          if (Gyroscope) {
+            hasGyroscope = true;
+          }
+        } catch (err) {
+          console.log("NO GIRO :(");
+        }
+
+        function iOS() {
+          return (
+            [
+              "iPad Simulator",
+              "iPhone Simulator",
+              "iPod Simulator",
+              "iPad",
+              "iPhone",
+              "iPod",
+            ].includes(navigator.platform) ||
+            // iPad on iOS 13 detection
+            (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+          );
+        }
+
+        console.log(window.location.search);
+        switch (window.location.search) {
+          case "?gaspar":
+            videoSrc = "gaspar1400.mp4";
+            tapaSrc = "gaspar.png";
+            backSrc = "red.png";
+            break;
+          case "?melchor":
+            videoSrc = "melchor1400.mp4";
+            tapaSrc = "melchor.png";
+            backSrc = "blue.png";
+            break;
+          case "?baltasar":
+          default:
+            videoSrc = "baltasar1400.mp4";
+            tapaSrc = "baltasar.png";
+            backSrc = "green.png";
+            break;
+        }
+
+        document.body.style = `background-image: url(/tapas/${backSrc})`;
+
+        localStorage.setItem(window.location.search, new Date().getTime());
+
+        let existingMagos = [
+          { name: "gaspar", time: localStorage.getItem("?gaspar") },
+          { name: "melchor", time: localStorage.getItem("?melchor") },
+          { name: "baltasar", time: localStorage.getItem("?baltasar") },
+        ].filter((e) => e.time);
+
+        console.log(existingMagos);
+        var showPlayMessage = false;
+
+        if (existingMagos.length === 3 && !localStorage.getItem("participo")) {
+          giveReward = true;
+        } else {
+          if (existingMagos.length === 2) {
+            setInstructions(
+              "Ya has escaneado 2 códigos ¡solo falta uno más para participar!"
+            );
+          } else {
+            setInstructions("Bienvenido");
+            showPlayMessage = true;
+          }
+        }
+
+        document.getElementById("tapa").src = `/tapas/${tapaSrc}`;
+
+        // document.getElementById("sendButton").onclick = function (evt) {
+        //   evt.preventDefault();
+        //   var d = document.getElementById("registroUsuario");
+        //   var elements = d.elements;
+        //   var payload = {};
+        //   for (var item of elements) {
+        //     if (item.value.length > 0) {
+        //       payload[item.name] = item.value;
+        //     }
+        //   }
+
+        //   console.log("payload", payload, Object.keys(payload).length);
+
+        //   if (Object.keys(payload).length < 3) {
+        //     setInstructions(
+        //       "No se pudo enviar, por favor rellena todos los datos."
+        //     );
+        //   } else {
+        //     var url =
+        //       "https://67beevx9ia.execute-api.eu-west-3.amazonaws.com/dev/save?spreadsheetId=12meQyZ5LCy_WeiOBo-Sp0LJMbwiXobJsT-ty8kXwHOM&worksheetName=Magos";
+
+        //     fetch(url, {
+        //       method: "POST", // or 'PUT'
+        //       body: JSON.stringify(payload), // data can be `string` or {object}!
+        //       headers: {
+        //         "Content-Type": "application/json",
+        //       },
+        //     });
+        //     document.getElementById("playButton").classList.remove("hidden");
+        //     document.getElementById("dataCapture").classList.add("hidden");
+        //     setInstructions(
+        //       "Enviado! Gracias por participar! Ahora solo tienes que darle reproducir :)"
+        //     );
+        //     localStorage.setItem("participo", true);
+        //   }
+        // };
+
+        function setInstructions(t, completed) {
+          instructionsText.innerText = t;
+          if (completed) {
+            document.location = "/capture.html";
+          }
+        }
+        var videoTag = document.getElementById("videoTag");
+        videoTag.src = `/videos/${videoSrc}`;
+
+        videoTag.addEventListener("progress", onProgress, false);
+
+        function onProgress(e) {
+          var vid = document.getElementById("videoTag");
+          var percent = null;
+
+          if (vid.buffered.length > 0 && vid.buffered.end && vid.duration) {
+            percent = vid.buffered.end(0) / vid.duration;
+          } else if (
+            vid.bytesTotal != undefined &&
+            vid.bytesTotal > 0 &&
+            vid.bufferedBytes != undefined
+          ) {
+            percent = vid.bufferedBytes / vid.bytesTotal;
+          }
+
+          if (percent !== null) {
+            percent = 100 * Math.min(1, Math.max(0, percent));
+
+            // console.log(percent);
+          }
+        }
+
+        // var canPlayOnce = false;
+
+        // function canPlayNow() {
+        //   console.log("can play!");
+        //   if (!canPlayOnce) {
+        //     canPlayOnce = true;
+
+        //     if (showPlayMessage) {
+        //       setInstructions(
+        //         "Apunta la cámara trasera del movil hacia el mago y dale reproducir ▶️."
+        //       );
+        //     }
+
+        //     // document.getElementById("playButton").classList.remove("hidden");
+        //   }
+        // }
+
+        // videoTag.addEventListener("canplay", canPlayNow);
+        // videoTag.addEventListener("loadedmetadata", canPlayNow);
+
+        // setTimeout(canPlayNow, 1500)
+
+        var mensajes = [
+          iOS()
+            ? "Tu movil no soporta WebVR, arrastra con tus dedos para explorar el video 360"
+            : "Mueve tu movil y explora el entorno 360",
+          giveReward
+            ? "¡Lo lograste! Espera al final del video y podras introducir tus datos."
+            : "¡Escanea los códigos de los tres magos y participa!",
+          "Los comercios de Alcobendas te dan la bienvenida",
+        ];
+
+        var mensajesPos = 0;
+        function cicloMensajes() {
+          setInterval(() => {
+            var msj = mensajes.shift();
+            setInstructions(msj);
+            mensajes.push(msj);
+          }, 5000);
+        }
+
+        // setInstructions("Lo lograste! solo dejanos tus datos!", true);
+
+        let playButton = document.getElementById("playButton");
+        playButton.onclick = function () {
+          longitude = 180;
+          latitude = iOS() ? 0 : -25;
+          init360();
+          setInstructions("Reproduciendo...");
+          cicloMensajes();
+          // setTimeout(() => {
+          // setInstructions(
+          //   "Mira a tu alrededor y explora el entorno de realidad aumentada!"
+          // );
+          // setInstructions("Lo lograste! solo dejanos tus datos!", true);
+          // }, 4000);
+          // setInstructions("Apunta el movil hacia GASPAR y dale reproducir.")
+
+          // setTimeout(() => {
+          //   setInstructions("Escanea los códigos de los tres magos y participa!");
+          // }, 8000);
+          // setInstructions("Ya has escaneado 2 códigos, solo falta uno más y estarás participando!")
+          // videoTag.play()
+        };
+        // panoramas background
+        // var panoramasArray = [
+        //   "01.jpg",
+        //   // "02.jpg",
+        //   // "03.jpg",
+        //   // "04.jpg",
+        //   // "05.jpg",
+        //   // "06.jpg",
+        // ];
+        // var panoramaNumber = Math.floor(Math.random() * panoramasArray.length);
+
+        // setting up the renderer
+        function init360() {
+          // var sensor = new RelativeOrientationSensor();
+          // sensor.addEventListener("reading", () => {
+          //   console.log("reading", sensor.quaternion);
+          // });
+          // sensor.start();
+
+          let centeringContainers =
+            document.getElementsByClassName("centeringContainer");
+          console.log(centeringContainers);
+          for (var container of centeringContainers) {
+            container.style = "display: none;";
+          }
+          setTimeout(() => {
+            centeringContainers =
+              document.getElementsByClassName("tapaContainer");
+            console.log(centeringContainers);
+            for (var container of centeringContainers) {
+              container.style = "display: none;";
+            }
+          }, 2000);
+
+          renderer = new THREE.WebGLRenderer();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+          document.body.appendChild(renderer.domElement);
+
+          // creating a new scene
+          var scene = new THREE.Scene();
+
+          // adding a camera
+          var camera = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            1,
+            1000
+          );
+          camera.target = new THREE.Vector3(0, 0, 0);
+
+          // creation of a big sphere geometry
+          var sphere = new THREE.SphereGeometry(100, 100, 40);
+          sphere.applyMatrix(new THREE.Matrix4().makeScale(-1, 1, 1));
+
+          const video = document.getElementById("videoTag");
+          video.play();
+
+          if (giveReward) {
+            setTimeout(() => {
+              setInstructions("", true);
+            }, 60000);
+          }
+
+          const texture = new THREE.VideoTexture(video);
+
+          // creation of the sphere material
+          var sphereMaterial = new THREE.MeshBasicMaterial();
+          // sphereMaterial.map = THREE.ImageUtils.loadTexture(
+          //   panoramasArray[panoramaNumber]
+          // );
+          sphereMaterial.map = texture;
+
+          // geometry + material = mesh (actual object)
+          var sphereMesh = new THREE.Mesh(sphere, sphereMaterial);
+          scene.add(sphereMesh);
+
+          // listeners
+          document.addEventListener("mousedown", onDocumentMouseDown, false);
+          document.addEventListener("mousemove", onDocumentMouseMove, false);
+          document.addEventListener("mouseup", onDocumentMouseUp, false);
+
+          render();
+
+          function render() {
+            requestAnimationFrame(render);
+
+            if (!manualControl) {
+              longitude += delta;
+            }
+
+            // limiting latitude from -85 to 85 (cannot point to the sky or under your feet)
+            latitude = Math.max(-85, Math.min(85, latitude));
+
+            // moving the camera according to current latitude (vertical movement) and longitude (horizontal movement)
+            camera.target.x =
+              500 *
+              Math.sin(THREE.Math.degToRad(90 - latitude)) *
+              Math.cos(THREE.Math.degToRad(longitude));
+
+            camera.target.y =
+              500 * Math.cos(THREE.Math.degToRad(90 - latitude));
+            camera.target.z =
+              500 *
+              Math.sin(THREE.Math.degToRad(90 - latitude)) *
+              Math.sin(THREE.Math.degToRad(longitude));
+            camera.lookAt(camera.target);
+
+            // calling again render function
+            renderer.render(scene, camera);
+          }
+
+          // when the mouse is pressed, we switch to manual control and save current coordinates
+          function onDocumentMouseDown(event) {
+            event.preventDefault();
+            delta = 0;
+
+            manualControl = true;
+
+            savedX = event.clientX;
+            savedY = event.clientY;
+
+            savedLongitude = longitude;
+            savedLatitude = latitude;
+          }
+
+          // when the mouse moves, if in manual contro we adjust coordinates
+          function onDocumentMouseMove(event) {
+            if (manualControl) {
+              longitude = (savedX - event.clientX) * 0.1 + savedLongitude;
+              latitude = (event.clientY - savedY) * 0.1 + savedLatitude;
+            }
+          }
+
+          // when the mouse is released, we turn manual control off
+          function onDocumentMouseUp(event) {
+            manualControl = false;
+          }
+
+          // pressing a key (actually releasing it) changes the texture map
+          // document.onkeyup = function (event) {
+          //   panoramaNumber = (panoramaNumber + 1) % panoramasArray.length;
+          //   sphereMaterial.map = THREE.ImageUtils.loadTexture(
+          //     panoramasArray[panoramaNumber]
+          //   );
+          // };
+
+          var container = document.querySelector("body");
+          container.addEventListener("touchstart", startTouch, false);
+          container.addEventListener("touchmove", moveTouch, false);
+
+          // Swipe Up / Down / Left / Right
+          var initialX = null;
+          var initialY = null;
+
+          function startTouch(e) {
+            initialX = e.touches[0].clientX;
+            initialY = e.touches[0].clientY;
+
+            savedLongitude = longitude;
+            savedLatitude = latitude;
+          }
+
+          function moveTouch(e) {
+            var currentX = e.touches[0].clientX;
+            var currentY = e.touches[0].clientY;
+
+            var diffX = initialX - currentX;
+            var diffY = currentY - initialY;
+
+            longitude = diffX * 0.16 + savedLongitude;
+            latitude = diffY * 0.08 + savedLatitude;
+          }
+
+          try {
+            let gyroscope = new Gyroscope({ frequency: 30 });
+
+            let horizontalsum = 0;
+            let verticalsum = 0;
+            let zsum = 0;
+
+            gyroscope.addEventListener("reading", (e) => {
+              console.log(`Angular velocity along the X-axis ${gyroscope.x}`);
+              console.log(`Angular velocity along the Y-axis ${gyroscope.y}`);
+              console.log(`Angular velocity along the Y-axis ${gyroscope.z}`);
+
+              let VerticalFactor = 2.5; // Vertical
+              let HorizontalFactor = -2.5; // Horizontal
+
+              latitude = gyroscope.x * VerticalFactor + latitude;
+              longitude = gyroscope.y * HorizontalFactor + longitude;
+
+              verticalsum = verticalsum + gyroscope.x;
+              horizontalsum = horizontalsum + gyroscope.y;
+              zsum = zsum + gyroscope.z;
+              console.log(zsum);
+
+              // console.log(`Angular velocity along the Z-axis ${gyroscope.z}`);
+            });
+            gyroscope.start();
+          } catch (err) {
+            console.log("Err", err);
+          }
+        }
+      } catch (err) {
+        setInstructions(err);
+      }
+      window.onError = function (message, source, lineno, colno, error) {
+        setInstructions(message);
+      };
+      // setInterval(() => {
+      //   console.log("longitude", longitude, "latitude", latitude, "zsum", zsum);
+      // }, 1000);
+    </script>
+  </body>
+</html>
