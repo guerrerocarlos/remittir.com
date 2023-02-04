@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Invitación</title>
+    <link
+      href="/css/bootstrap-reboot.css"
+      rel="stylesheet"
+      crossorigin="anonymous"
+    />
+    <link
+      href="/css/bootstrap.min.css"
+      rel="stylesheet"
+      crossorigin="anonymous"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+  </head>
+  <style>
+    img {
+      width: 100%;
+    }
+    .veil {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 20;
+      height: 100%;
+    }
+
+    .veil img {
+      width: 50%;
+      margin: auto;
+      margin-top: 20%;
+    }
+  </style>
+  <body>
+    <div class="container-flex">
+      <div class="row">
+        <div class="col-12">
+          <img src="/invitacion1.jpg" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-12">
+          <img src="/invitacion2.jpg" />
+        </div>
+      </div>
+    </div>
+    <audio id="music" src="/MUSIC.mp3"></audio>
+    <div id="veil" class="veil text-center ">
+      <img class="" src="/play.png" />
+    </div>
+  </body>
+  <script>
+    var m = document.getElementById("music");
+    var veil = document.getElementById("veil")
+
+    function play() {
+      veil.classList.add("d-none")
+      m.play();
+    }
+    // m.addEventListener("touchstart", play);
+
+    document.onclick = play;
+    document.ontouchmove = play;
+  </script>
+</html>
