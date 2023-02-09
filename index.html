@@ -29,7 +29,7 @@
       top: 0;
       left: 0;
       width: 100%;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0, 0, 0, 0.5);
       z-index: 20;
       height: 100%;
     }
@@ -39,35 +39,31 @@
       margin: auto;
       margin-top: 20%;
     }
+    .row-container {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      flex-direction: column;
+      background-color: blue;
+      overflow: hidden;
+    }
   </style>
   <body>
-    <div class="container">
-      <div class="row">
-        <div class="col-12 mt-4">
-          <img src="/invitacion1.jpg" />
-        </div>
-      </div>
-    </br>
-      <div class="row">
-        <div class="col-12 mt-4">
-          <img src="/invitacion2.jpg" />
-        </div>
-      </div>
-    </div>
-  </br>
-</br>
-
+    <iframe
+      style="position: fixed; width: 100%; height: 100%; border: none"
+      src="/invitacion.html"
+    ></iframe>
     <audio id="music" src="/MUSIC.mp3"></audio>
-    <div id="veil" class="veil text-center ">
+    <div id="veil" class="veil text-center">
       <img class="" src="/play.png" />
     </div>
   </body>
   <script>
     var m = document.getElementById("music");
-    var veil = document.getElementById("veil")
+    var veil = document.getElementById("veil");
 
     function play() {
-      veil.classList.add("d-none")
+      veil.classList.add("d-none");
       m.play();
     }
     // m.addEventListener("touchstart", play);
